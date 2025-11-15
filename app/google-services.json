@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1075145656069",
+    "project_id": "gymvance-2984e",
+    "storage_bucket": "gymvance-2984e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1075145656069:android:d6f6678b2824815ffc996c",
+        "android_client_info": {
+          "package_name": "com.example.gymvance"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLRKJfwh2RXs-7qPdjYvhyU8EsG18NUi4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
