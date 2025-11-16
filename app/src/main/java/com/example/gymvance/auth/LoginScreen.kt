@@ -1,4 +1,3 @@
-// LoginScreen.kt
 package com.example.gymvance.auth
 
 import androidx.compose.foundation.layout.*
@@ -73,11 +72,16 @@ fun LoginScreen(navController: NavController) {
 
                 auth.signInWithEmailAndPassword(email.trim(), password)
                     .addOnCompleteListener { task ->
-                        message = if (task.isSuccessful) {
-                            // Solo mensaje, no navega a home
-                            "Login exitoso"
+                        if (task.isSuccessful) {
+                            message = "Login exitoso"
+
+                            // 🔥 NAVEGAR AL HOME
+                            navController.navigate("home") {
+                                popUpTo("login") { inclusive = true }
+                            }
+
                         } else {
-                            task.exception?.message ?: "Error desconocido"
+                            message = task.exception?.message ?: "Error desconocido"
                         }
                     }
             },
