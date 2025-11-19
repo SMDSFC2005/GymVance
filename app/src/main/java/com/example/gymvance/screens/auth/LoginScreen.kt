@@ -1,4 +1,4 @@
-package com.example.gymvance.auth
+package com.example.gymvance.screens.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions

@@ -1,5 +1,4 @@
-// RegisterScreen.kt
-package com.example.gymvance.auth
+package com.example.gymvance.screens.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -44,6 +43,7 @@ fun RegisterScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading
         )
+
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
@@ -55,6 +55,7 @@ fun RegisterScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading
         )
+
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
@@ -66,6 +67,7 @@ fun RegisterScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading
         )
+
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
@@ -77,11 +79,12 @@ fun RegisterScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             enabled = !isLoading
         )
+
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
             onClick = {
-                // VALIDACIONES MÍNIMAS
+                // VALIDACIONES
                 when {
                     username.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
                         message = "Completa todos los campos"
@@ -108,17 +111,28 @@ fun RegisterScreen(navController: NavController) {
                                 return@addOnSuccessListener
                             }
 
-                            // 2. Crear usuario + guardar nombre
+                            // 2. Crear usuario en auth
                             auth.createUserWithEmailAndPassword(email.trim(), password)
                                 .addOnSuccessListener { result ->
                                     val uid = result.user!!.uid
+
+                                    // 3. Guardar username + email + role
+                                    val userData = mapOf(
+                                        "username" to username.trim(),
+                                        "email" to email.trim(),
+                                        "role" to "user"
+                                    )
+
                                     firestore.collection("users").document(uid)
-                                        .set(mapOf("username" to username.trim()))
+                                        .set(userData)
                                         .addOnSuccessListener {
-                                            // VA DIRECTO A LOGIN
                                             navController.navigate("login") {
                                                 popUpTo("register") { inclusive = true }
                                             }
+                                        }
+                                        .addOnFailureListener {
+                                            isLoading = false
+                                            message = "Error al guardar usuario"
                                         }
                                 }
                                 .addOnFailureListener {
@@ -132,7 +146,10 @@ fun RegisterScreen(navController: NavController) {
             enabled = !isLoading
         ) {
             if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Creando...")
             } else {
@@ -146,6 +163,7 @@ fun RegisterScreen(navController: NavController) {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
         TextButton(onClick = { navController.navigate("login") }) {
             Text("¿Ya tienes cuenta? Inicia sesión")
         }
