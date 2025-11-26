@@ -75,7 +75,7 @@ fun LoginScreen(navController: NavController) {
                         if (task.isSuccessful) {
                             message = "Login exitoso"
 
-                            // 🔥 NAVEGAR AL HOME
+                            //NAVEGAR AL HOME
                             navController.navigate("home") {
                                 popUpTo("login") { inclusive = true }
                             }

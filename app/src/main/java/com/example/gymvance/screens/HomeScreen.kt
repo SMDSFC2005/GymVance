@@ -71,9 +71,20 @@ fun HomeScreen(navController: NavController) {
             text = "Perfil",
             onClick = { navController.navigate("profile") }
         )
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Button(
+            onClick = {
+                auth.signOut()
+                navController.navigate("login") {
+                }
+            },
+        ) {
+            Text("Cerrar sesión")
+        }
+
     }
 }
-//0371
 
 @Composable
 fun HomeCard(text: String, onClick: () -> Unit) {
