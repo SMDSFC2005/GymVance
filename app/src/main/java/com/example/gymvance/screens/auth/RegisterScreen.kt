@@ -1,13 +1,13 @@
 package com.example.gymvance.screens.auth
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(navController: NavController) {
+
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     val scope = rememberCoroutineScope()
@@ -24,70 +25,105 @@ fun RegisterScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+
+    var showPassword by remember { mutableStateOf(false) }
+    var showConfirmPassword by remember { mutableStateOf(false) }
+
     var message by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
         Text("Crear cuenta", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(24.dp))
 
+        // USERNAME
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
             label = { Text("Nombre de usuario") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // EMAIL
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // PASSWORD
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Contraseña") },
-            visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            visualTransformation = if (showPassword)
+                VisualTransformation.None
+            else
+                PasswordVisualTransformation(),
+            trailingIcon = {
+                Text(
+                    text = if (showPassword) "Ocultar" else "Mostrar",
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .clickable { showPassword = !showPassword }
+                )
+            },
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // CONFIRM PASSWORD
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it },
             label = { Text("Repetir contraseña") },
-            visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            visualTransformation = if (showConfirmPassword)
+                VisualTransformation.None
+            else
+                PasswordVisualTransformation(),
+            trailingIcon = {
+                Text(
+                    text = if (showConfirmPassword) "Ocultar" else "Mostrar",
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .clickable { showConfirmPassword = !showConfirmPassword }
+                )
+            },
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        // BUTTON REGISTER
         Button(
             onClick = {
-                // VALIDACIONES
                 when {
                     username.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
                         message = "Completa todos los campos"
+                        return@Button
+                    }
+                    password.length < 6 -> {
+                        message = "La contraseña debe tener al menos 6 caracteres"
                         return@Button
                     }
                     password != confirmPassword -> {
@@ -100,23 +136,20 @@ fun RegisterScreen(navController: NavController) {
                 message = ""
 
                 scope.launch {
-                    // 1. ¿El nombre ya existe?
                     firestore.collection("users")
                         .whereEqualTo("username", username.trim())
                         .get()
                         .addOnSuccessListener { docs ->
                             if (!docs.isEmpty) {
                                 isLoading = false
-                                message = "Nombre ya en uso"
+                                message = "Ese nombre de usuario ya está registrado"
                                 return@addOnSuccessListener
                             }
 
-                            // 2. Crear usuario en auth
                             auth.createUserWithEmailAndPassword(email.trim(), password)
                                 .addOnSuccessListener { result ->
                                     val uid = result.user!!.uid
 
-                                    // 3. Guardar username + email + role
                                     val userData = mapOf(
                                         "username" to username.trim(),
                                         "email" to email.trim(),
@@ -130,20 +163,16 @@ fun RegisterScreen(navController: NavController) {
                                                 popUpTo("register") { inclusive = true }
                                             }
                                         }
-                                        .addOnFailureListener {
-                                            isLoading = false
-                                            message = "Error al guardar usuario"
-                                        }
                                 }
-                                .addOnFailureListener {
+                                .addOnFailureListener { e ->
                                     isLoading = false
-                                    message = "Error al registrarse"
+                                    message = traducirErrorFirebase(e.message)
                                 }
                         }
                 }
             },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            enabled = !isLoading,
+            modifier = Modifier.fillMaxWidth()
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
@@ -167,5 +196,20 @@ fun RegisterScreen(navController: NavController) {
         TextButton(onClick = { navController.navigate("login") }) {
             Text("¿Ya tienes cuenta? Inicia sesión")
         }
+    }
+}
+
+fun traducirErrorFirebase(error: String?): String {
+    return when {
+        error?.contains("email address is already in use") == true ->
+            "Ese correo ya está registrado"
+
+        error?.contains("badly formatted") == true ->
+            "Formato de correo no válido"
+
+        error?.contains("blocked all requests") == true ->
+            "Demasiados intentos, inténtalo más tarde"
+
+        else -> "Error: ${error ?: "desconocido"}"
     }
 }
